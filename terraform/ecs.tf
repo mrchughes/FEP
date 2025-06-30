@@ -50,7 +50,7 @@ resource "aws_ecs_service" "fep_service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.fep_tg.arn
+    target_group_arn = data.aws_lb_target_group.fep_tg.arn
     container_name   = "frontend"
     container_port   = 3000
   }
