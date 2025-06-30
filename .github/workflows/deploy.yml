@@ -28,6 +28,9 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build and push backend image
+      env:
+        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        AWS_REGION: ${{ env.AWS_REGION }}
       run: |
         cd backend
         BACKEND_REPO="${{ secrets.BACKEND_ECR_REPO }}"
@@ -36,6 +39,9 @@ jobs:
         echo "BACKEND_IMAGE_URI=$BACKEND_REPO:latest" >> $GITHUB_ENV
 
     - name: Build and push frontend image
+      env:
+        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        AWS_REGION: ${{ env.AWS_REGION }}
       run: |
         cd ../frontend
         FRONTEND_REPO="${{ secrets.FRONTEND_ECR_REPO }}"
