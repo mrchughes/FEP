@@ -1,0 +1,3 @@
+bucket_name       = "your-s3-bucket-name"
+region            = "eu-west-2"
+dynamo_table_name = "your-dynamodb-table-name"

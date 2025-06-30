@@ -1,0 +1,22 @@
+.govuk-navbar {
+    background-color: #0b0c0c;
+    padding: 10px;
+}
+
+.govuk-navbar a {
+    color: white;
+    margin-right: 15px;
+    text-decoration: none;
+}
+
+.govuk-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.govuk-panel--confirmation {
+    background-color: #00703c;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
