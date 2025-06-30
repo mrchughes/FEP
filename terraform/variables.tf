@@ -33,12 +33,3 @@ variable "frontend_repo_name" {
   type        = string
 }
 
-variable "bucket_name" {
-  description = "S3 bucket for TF state"
-  type        = string
-}
-
-variable "lock_table_name" {
-  description = "DynamoDB table for TF lock"
-  type        = string
-}
