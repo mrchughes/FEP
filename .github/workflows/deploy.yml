@@ -1,4 +1,4 @@
-name: Deploy Funeral App
+name: Deploy Funeral App FEP
 
 on:
   push:
@@ -9,50 +9,53 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: eu-west-2
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install
+    - name: Build and push backend image
+      run: |
+        cd backend
+        BACKEND_REPO="${{ secrets.BACKEND_ECR_REPO }}"
+        docker build -t $BACKEND_REPO:latest .
+        docker push $BACKEND_REPO:latest
+        echo "BACKEND_IMAGE_URI=$BACKEND_REPO:latest" >> $GITHUB_ENV
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+    - name: Build and push frontend image
+      run: |
+        cd ../frontend
+        FRONTEND_REPO="${{ secrets.FRONTEND_ECR_REPO }}"
+        docker build -t $FRONTEND_REPO:latest .
+        docker push $FRONTEND_REPO:latest
+        echo "FRONTEND_IMAGE_URI=$FRONTEND_REPO:latest" >> $GITHUB_ENV
 
-      - name: Terraform init and apply
-        run: |
-          cd terraform
-          terraform init
-          terraform apply -auto-approve -var-file="terraform.tfvars"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform init and apply
-        run: |
-          cd terraform
-          terraform init
-          terraform apply -auto-approve
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+    - name: Terraform Init
+      run: cd terraform && terraform init
 
-      - name: Build backend Docker image
-        run: docker build -t funeral-backend -f Dockerfile .
-
-      - name: Push Docker images (stub)
-        run: echo "Update this step to push images to your Docker registry"
+    - name: Terraform Apply
+      run: |
+        cd terraform
+        terraform apply -auto-approve \
+          -var="vpc_id=${{ secrets.VPC_ID }}" \
+          -var="subnet_ids=[\"${{ secrets.SUBNET_ID_1 }}\",\"${{ secrets.SUBNET_ID_2 }}\"]" \
+          -var="alb_listener_arn_https=${{ secrets.ALB_LISTENER_ARN }}" \
+          -var="alb_security_group_id=${{ secrets.ALB_SG_ID }}" \
+          -var="backend_image=${{ env.BACKEND_IMAGE_URI }}" \
+          -var="frontend_image=${{ env.FRONTEND_IMAGE_URI }}"

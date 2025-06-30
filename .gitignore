@@ -3,7 +3,6 @@ node_modules/
 *.log
 terraform.tfstate
 .terraform/
-*.tfvars
 dist/
 build/
 .DS_Store
