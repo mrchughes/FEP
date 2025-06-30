@@ -41,8 +41,8 @@ jobs:
 
     - name: Load Terraform outputs as env
       run: |
-        echo "BACKEND_REPO_URL=$(grep -Eo '^[^:]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/[^[:space:]]+' $GITHUB_WORKSPACE/backend_repo_url.txt)" >> $GITHUB_ENV
-        echo "FRONTEND_REPO_URL=$(grep -Eo '^[^:]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/[^[:space:]]+' $GITHUB_WORKSPACE/frontend_repo_url.txt)" >> $GITHUB_ENV
+        echo "BACKEND_REPO_URL=$(grep -Eo '^[^[:space:]]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/[a-zA-Z0-9._/-]+' $GITHUB_WORKSPACE/backend_repo_url.txt)" >> $GITHUB_ENV
+        echo "FRONTEND_REPO_URL=$(grep -Eo '^[^[:space:]]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/[a-zA-Z0-9._/-]+' $GITHUB_WORKSPACE/frontend_repo_url.txt)" >> $GITHUB_ENV
 
     - name: Login to Amazon ECR
       run: |
