@@ -7,7 +7,7 @@ resource "aws_lb_target_group" "fep_tg" {
 
 resource "aws_lb_listener_rule" "fep_rule" {
   listener_arn = var.alb_listener_arn
-  priority     = 100
+  priority     = 110
 
   action {
     type             = "forward"
