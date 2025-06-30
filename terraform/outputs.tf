@@ -1,7 +1,7 @@
-output "bucket_name" {
-  value = aws_s3_bucket.forms_bucket.id
+output "backend_repo_url" {
+  value = aws_ecr_repository.backend.repository_url
 }
 
-output "dynamo_table_name" {
-  value = aws_dynamodb_table.users.name
+output "frontend_repo_url" {
+  value = aws_ecr_repository.frontend.repository_url
 }

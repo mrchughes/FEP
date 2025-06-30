@@ -23,36 +23,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Build and push backend image
-      env:
-        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-        AWS_REGION: ${{ env.AWS_REGION }}
-      run: |
-        cd backend
-        BACKEND_REPO="${{ secrets.BACKEND_ECR_REPO }}"
-        ECR_REGISTRY=$(echo $BACKEND_REPO | cut -d'/' -f1)
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-        docker build -t $BACKEND_REPO:latest .
-        docker push $BACKEND_REPO:latest
-        echo "BACKEND_IMAGE_URI=$BACKEND_REPO:latest" >> $GITHUB_ENV
-
-    - name: Build and push frontend image
-      env:
-        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-        AWS_REGION: ${{ env.AWS_REGION }}
-      run: |
-        cd ../frontend
-        FRONTEND_REPO="${{ secrets.FRONTEND_ECR_REPO }}"
-        ECR_REGISTRY=$(echo $FRONTEND_REPO | cut -d'/' -f1)
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-        docker build -t $FRONTEND_REPO:latest .
-        docker push $FRONTEND_REPO:latest
-        echo "FRONTEND_IMAGE_URI=$FRONTEND_REPO:latest" >> $GITHUB_ENV
-
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
@@ -60,6 +30,40 @@ jobs:
       run: cd terraform && terraform init
 
     - name: Terraform Apply
+      run: cd terraform && terraform apply -auto-approve
+
+    - name: Get Terraform outputs
+      id: tf-outputs
+      run: |
+        cd terraform
+        echo "BACKEND_REPO_URL=$(terraform output -raw backend_repo_url)" >> $GITHUB_ENV
+        echo "FRONTEND_REPO_URL=$(terraform output -raw frontend_repo_url)" >> $GITHUB_ENV
+
+    - name: Login to Amazon ECR
+      run: |
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "${{ env.BACKEND_REPO_URL | split('/') | first }}"
+
+    - name: Build and push backend image
+      env:
+        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        AWS_REGION: ${{ env.AWS_REGION }}
+      run: |
+        cd backend
+        docker build -t ${{ env.BACKEND_REPO_URL }}:latest .
+        docker push ${{ env.BACKEND_REPO_URL }}:latest
+        echo "BACKEND_IMAGE_URI=${{ env.BACKEND_REPO_URL }}:latest" >> $GITHUB_ENV
+
+    - name: Build and push frontend image
+      env:
+        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        AWS_REGION: ${{ env.AWS_REGION }}
+      run: |
+        cd ../frontend
+        docker build -t ${{ env.FRONTEND_REPO_URL }}:latest .
+        docker push ${{ env.FRONTEND_REPO_URL }}:latest
+        echo "FRONTEND_IMAGE_URI=${{ env.FRONTEND_REPO_URL }}:latest" >> $GITHUB_ENV
+
+    - name: Terraform Apply (update ECS with images)
       run: |
         cd terraform
         terraform apply -auto-approve \
@@ -69,4 +73,3 @@ jobs:
           -var="alb_security_group_id=${{ secrets.ALB_SG_ID }}" \
           -var="backend_image=${{ env.BACKEND_IMAGE_URI }}" \
           -var="frontend_image=${{ env.FRONTEND_IMAGE_URI }}"
-
