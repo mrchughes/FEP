@@ -36,8 +36,10 @@ jobs:
       id: tf-outputs
       run: |
         cd terraform/ecr-only
-        echo "BACKEND_REPO_URL=$(terraform output -raw backend_repo_url)" >> $GITHUB_ENV
-        echo "FRONTEND_REPO_URL=$(terraform output -raw frontend_repo_url)" >> $GITHUB_ENV
+        BACKEND_REPO_URL=$(terraform output -raw backend_repo_url)
+        FRONTEND_REPO_URL=$(terraform output -raw frontend_repo_url)
+        echo "BACKEND_REPO_URL=$BACKEND_REPO_URL" >> $GITHUB_ENV
+        echo "FRONTEND_REPO_URL=$FRONTEND_REPO_URL" >> $GITHUB_ENV
 
     - name: Login to Amazon ECR
       run: |
