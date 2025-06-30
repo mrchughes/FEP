@@ -1,0 +1,7 @@
+aws_region        = "eu-west-2"
+vpc_id            = "vpc-0dfd9c615c35f116e"
+subnet_ids        = ["subnet-0294643997eace1f1", "subnet-02821829c80fe512c"]
+alb_sg_id         = "sg-02b6fec418d86587e"
+alb_listener_arn  = "arn:aws:elasticloadbalancing:eu-west-2:357402308721:listener/app/Chris-Agent-LB/edabc91bfe9420a2/21c8d550f2791f59"
+backend_repo_name = "fep-backend"
+frontend_repo_name = "fep-frontend"
