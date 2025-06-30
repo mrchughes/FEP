@@ -36,13 +36,13 @@ jobs:
       run: |
         cd terraform/ecr-only
         echo "Getting backend_repo_url..."
-        terraform output -raw backend_repo_url > ../backend_repo_url.txt
-        terraform output -raw frontend_repo_url > ../frontend_repo_url.txt
+        terraform output -raw backend_repo_url > $GITHUB_WORKSPACE/backend_repo_url.txt
+        terraform output -raw frontend_repo_url > $GITHUB_WORKSPACE/frontend_repo_url.txt
 
     - name: Load Terraform outputs as env
       run: |
-        echo "BACKEND_REPO_URL=$(cat backend_repo_url.txt)" >> $GITHUB_ENV
-        echo "FRONTEND_REPO_URL=$(cat frontend_repo_url.txt)" >> $GITHUB_ENV
+        echo "BACKEND_REPO_URL=$(cat $GITHUB_WORKSPACE/backend_repo_url.txt)" >> $GITHUB_ENV
+        echo "FRONTEND_REPO_URL=$(cat $GITHUB_WORKSPACE/frontend_repo_url.txt)" >> $GITHUB_ENV
 
     - name: Login to Amazon ECR
       run: |
