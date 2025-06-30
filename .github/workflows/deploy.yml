@@ -29,13 +29,15 @@ jobs:
     - name: Terraform Init (ECR)
       run: cd terraform/ecr-only && terraform init
 
+    - name: Terraform Refresh (ECR)
+      run: cd terraform/ecr-only && terraform apply -refresh-only -auto-approve || true
+
     - name: Terraform Apply (ECR)
       run: cd terraform/ecr-only && terraform apply -auto-approve
 
     - name: Get Terraform outputs
       run: |
         cd terraform/ecr-only
-        echo "Getting backend_repo_url..."
         terraform output -raw backend_repo_url > $GITHUB_WORKSPACE/backend_repo_url.txt
         terraform output -raw frontend_repo_url > $GITHUB_WORKSPACE/frontend_repo_url.txt
 
@@ -52,7 +54,6 @@ jobs:
     - name: Build and push backend image
       env:
         AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-        AWS_REGION: ${{ env.AWS_REGION }}
       run: |
         cd backend
         docker build -t ${{ env.BACKEND_REPO_URL }}:latest .
@@ -62,7 +63,6 @@ jobs:
     - name: Build and push frontend image
       env:
         AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-        AWS_REGION: ${{ env.AWS_REGION }}
       run: |
         cd $GITHUB_WORKSPACE/frontend
         docker build -t ${{ env.FRONTEND_REPO_URL }}:latest .
@@ -71,6 +71,9 @@ jobs:
 
     - name: Terraform Init (ECS)
       run: cd terraform/ecs && terraform init
+
+    - name: Terraform Refresh (ECS)
+      run: cd terraform/ecs && terraform apply -refresh-only -auto-approve || true
 
     - name: Terraform Apply (ECS)
       run: |

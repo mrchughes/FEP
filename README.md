@@ -28,4 +28,4 @@ docker-compose up
 
 
 # Temp change to trigger deploy agai
-# Trigger deploy after deleting ECR repo
+# Trigger deploy after deleting ECR rep
