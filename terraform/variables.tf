@@ -33,3 +33,12 @@ variable "frontend_repo_name" {
   type        = string
 }
 
+variable "dynamo_table_name" {
+  description = "DynamoDB table name for the app"
+  type        = string
+}
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name for app outputs"
+  type        = string
+}
