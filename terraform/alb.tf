@@ -1,22 +1,34 @@
 # ===============================
-# ALB Target Group (existing)
+# ALB Target Group (new for Fargate)
 # ===============================
-data "aws_lb_target_group" "fep_tg" {
-  arn = "arn:aws:elasticloadbalancing:eu-west-2:357402308721:targetgroup/fep-tg/0d661dd93c3b7ce0"
+resource "aws_lb_target_group" "fep_tg" {
+  name        = "fep-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip" # 💥 IMPORTANT for Fargate
+
+  health_check {
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    matcher             = "200-399"
+  }
 }
 
 # ===============================
 # ALB Listener Rule for /FEP*
 # ===============================
 resource "aws_lb_listener_rule" "fep_rule" {
-  # Choose HTTPS or HTTP listener ARN
-  listener_arn = "arn:aws:elasticloadbalancing:eu-west-2:357402308721:listener/app/Chris-Agent-LB/edabc91bfe9420a2/87c89b115afc486c" # <-- HTTPS listener
+  listener_arn = var.alb_listener_arn # 💡 Use your HTTPS or HTTP ARN
 
   priority = 110
 
   action {
     type             = "forward"
-    target_group_arn = data.aws_lb_target_group.fep_tg.arn
+    target_group_arn = aws_lb_target_group.fep_tg.arn
   }
 
   condition {
