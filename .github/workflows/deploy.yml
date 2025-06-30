@@ -64,7 +64,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         AWS_REGION: ${{ env.AWS_REGION }}
       run: |
-        cd ../frontend
+        cd $GITHUB_WORKSPACE/frontend
         docker build -t ${{ env.FRONTEND_REPO_URL }}:latest .
         docker push ${{ env.FRONTEND_REPO_URL }}:latest
         echo "FRONTEND_IMAGE_URI=${{ env.FRONTEND_REPO_URL }}:latest" >> $GITHUB_ENV
