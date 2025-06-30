@@ -27,4 +27,5 @@ A fully functional MERN-based application to submit funeral expenses forms, auth
 docker-compose up
 
 
-# Temp change to trigger deploy again
+# Temp change to trigger deploy agai
+# Trigger deploy after deleting ECR repos
