@@ -18,8 +18,6 @@ jobs:
       ALB_LISTENER_ARN: ${{ secrets.ALB_LISTENER_ARN }}
       BACKEND_ECR_REPO: ${{ secrets.BACKEND_ECR_REPO }}
       FRONTEND_ECR_REPO: ${{ secrets.FRONTEND_ECR_REPO }}
-      TF_BUCKET_NAME: your-tf-state-bucket-name
-      TF_LOCK_TABLE: your-tf-lock-table
 
     steps:
       - name: Checkout code
@@ -40,11 +38,11 @@ jobs:
         working-directory: terraform
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -var="aws_region=${{ env.AWS_REGION }}" -var="vpc_id=${{ env.VPC_ID }}" -var="subnet_ids=[\"${{ env.SUBNET_ID_1 }}\",\"${{ env.SUBNET_ID_2 }}\"]" -var="alb_sg_id=${{ env.ALB_SG_ID }}" -var="alb_listener_arn=${{ env.ALB_LISTENER_ARN }}" -var="backend_repo_name=${{ env.BACKEND_ECR_REPO }}" -var="frontend_repo_name=${{ env.FRONTEND_ECR_REPO }}"
         working-directory: terraform
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var="aws_region=${{ env.AWS_REGION }}" -var="vpc_id=${{ env.VPC_ID }}" -var="subnet_ids=[\"${{ env.SUBNET_ID_1 }}\",\"${{ env.SUBNET_ID_2 }}\"]" -var="alb_sg_id=${{ env.ALB_SG_ID }}" -var="alb_listener_arn=${{ env.ALB_LISTENER_ARN }}" -var="backend_repo_name=${{ env.BACKEND_ECR_REPO }}" -var="frontend_repo_name=${{ env.FRONTEND_ECR_REPO }}"
         working-directory: terraform
 
       - name: Login to Amazon ECR
@@ -55,10 +53,4 @@ jobs:
         run: |
           docker build -t ${{ env.BACKEND_ECR_REPO }} ./backend
           docker tag ${{ env.BACKEND_ECR_REPO }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPO }}:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPO }}:latest
-
-      - name: Build frontend image
-        run: |
-          docker build -t ${{ env.FRONTEND_ECR_REPO }} ./frontend
-          docker tag ${{ env.FRONTEND_ECR_REPO }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPO }}:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPO }}:latest
+          docker
