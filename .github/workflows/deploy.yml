@@ -34,7 +34,8 @@ jobs:
       run: |
         cd backend
         BACKEND_REPO="${{ secrets.BACKEND_ECR_REPO }}"
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$BACKEND_REPO"
+        ECR_REGISTRY=$(echo $BACKEND_REPO | cut -d'/' -f1)
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$ECR_REGISTRY"
         docker build -t $BACKEND_REPO:latest .
         docker push $BACKEND_REPO:latest
         echo "BACKEND_IMAGE_URI=$BACKEND_REPO:latest" >> $GITHUB_ENV
@@ -46,7 +47,8 @@ jobs:
       run: |
         cd ../frontend
         FRONTEND_REPO="${{ secrets.FRONTEND_ECR_REPO }}"
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$FRONTEND_REPO"
+        ECR_REGISTRY=$(echo $FRONTEND_REPO | cut -d'/' -f1)
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$ECR_REGISTRY"
         docker build -t $FRONTEND_REPO:latest .
         docker push $FRONTEND_REPO:latest
         echo "FRONTEND_IMAGE_URI=$FRONTEND_REPO:latest" >> $GITHUB_ENV
@@ -67,3 +69,4 @@ jobs:
           -var="alb_security_group_id=${{ secrets.ALB_SG_ID }}" \
           -var="backend_image=${{ env.BACKEND_IMAGE_URI }}" \
           -var="frontend_image=${{ env.FRONTEND_IMAGE_URI }}"
+
