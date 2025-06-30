@@ -36,8 +36,13 @@ jobs:
       id: tf-outputs
       run: |
         cd terraform/ecr-only
-        BACKEND_REPO_URL=$(terraform output -raw backend_repo_url 2>/dev/null || terraform output backend_repo_url | tr -d '"')
-        FRONTEND_REPO_URL=$(terraform output -raw frontend_repo_url 2>/dev/null || terraform output frontend_repo_url | tr -d '"')
+        echo "Getting backend_repo_url..."
+        terraform output -raw backend_repo_url > backend_url.txt
+        terraform output -raw frontend_repo_url > frontend_url.txt
+
+        BACKEND_REPO_URL=$(cat backend_url.txt)
+        FRONTEND_REPO_URL=$(cat frontend_url.txt)
+
         echo "BACKEND_REPO_URL=$BACKEND_REPO_URL" >> $GITHUB_ENV
         echo "FRONTEND_REPO_URL=$FRONTEND_REPO_URL" >> $GITHUB_ENV
 
