@@ -41,7 +41,8 @@ jobs:
 
     - name: Login to Amazon ECR
       run: |
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "${{ env.BACKEND_REPO_URL | split('/') | first }}"
+        ECR_REGISTRY=$(echo "${{ env.BACKEND_REPO_URL }}" | cut -d'/' -f1)
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
     - name: Build and push backend image
       env:
