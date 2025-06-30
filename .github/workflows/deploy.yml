@@ -1,4 +1,4 @@
-name: Deploy Funeral App FEP
+name: Deploy FEP App
 
 on:
   push:
@@ -6,82 +6,59 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: eu-west-2
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      VPC_ID: ${{ secrets.VPC_ID }}
+      SUBNET_ID_1: ${{ secrets.SUBNET_ID_1 }}
+      SUBNET_ID_2: ${{ secrets.SUBNET_ID_2 }}
+      ALB_SG_ID: ${{ secrets.ALB_SG_ID }}
+      ALB_LISTENER_ARN: ${{ secrets.ALB_LISTENER_ARN }}
+      BACKEND_ECR_REPO: ${{ secrets.BACKEND_ECR_REPO }}
+      FRONTEND_ECR_REPO: ${{ secrets.FRONTEND_ECR_REPO }}
+      TF_BUCKET_NAME: your-tf-state-bucket-name
+      TF_LOCK_TABLE: your-tf-lock-table
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-    - name: Terraform Init (ECR)
-      run: cd terraform/ecr-only && terraform init
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
 
-    - name: Terraform Refresh (ECR)
-      run: cd terraform/ecr-only && terraform apply -refresh-only -auto-approve || true
+      - name: Terraform Plan
+        run: terraform plan
+        working-directory: terraform
 
-    - name: Terraform Apply (ECR)
-      run: cd terraform/ecr-only && terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: terraform
 
-    - name: Get Terraform outputs
-      run: |
-        cd terraform/ecr-only
-        terraform output -raw backend_repo_url > $GITHUB_WORKSPACE/backend_repo_url.txt
-        terraform output -raw frontend_repo_url > $GITHUB_WORKSPACE/frontend_repo_url.txt
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Load Terraform outputs as env
-      run: |
-        echo "BACKEND_REPO_URL=$(grep -Eo '^[^[:space:]]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/[a-zA-Z0-9._/-]+' $GITHUB_WORKSPACE/backend_repo_url.txt)" >> $GITHUB_ENV
-        echo "FRONTEND_REPO_URL=$(grep -Eo '^[^[:space:]]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/[a-zA-Z0-9._/-]+' $GITHUB_WORKSPACE/frontend_repo_url.txt)" >> $GITHUB_ENV
+      - name: Build backend image
+        run: |
+          docker build -t ${{ env.BACKEND_ECR_REPO }} ./backend
+          docker tag ${{ env.BACKEND_ECR_REPO }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPO }}:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPO }}:latest
 
-    - name: Login to Amazon ECR
-      run: |
-        ECR_REGISTRY=$(echo "${{ env.BACKEND_REPO_URL }}" | cut -d'/' -f1)
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-
-    - name: Build and push backend image
-      env:
-        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-      run: |
-        cd backend
-        docker build -t ${{ env.BACKEND_REPO_URL }}:latest .
-        docker push ${{ env.BACKEND_REPO_URL }}:latest
-        echo "BACKEND_IMAGE_URI=${{ env.BACKEND_REPO_URL }}:latest" >> $GITHUB_ENV
-
-    - name: Build and push frontend image
-      env:
-        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-      run: |
-        cd $GITHUB_WORKSPACE/frontend
-        docker build -t ${{ env.FRONTEND_REPO_URL }}:latest .
-        docker push ${{ env.FRONTEND_REPO_URL }}:latest
-        echo "FRONTEND_IMAGE_URI=${{ env.FRONTEND_REPO_URL }}:latest" >> $GITHUB_ENV
-
-    - name: Terraform Init (ECS)
-      run: cd terraform/ecs && terraform init
-
-    - name: Terraform Refresh (ECS)
-      run: cd terraform/ecs && terraform apply -refresh-only -auto-approve || true
-
-    - name: Terraform Apply (ECS)
-      run: |
-        cd terraform/ecs
-        terraform apply -auto-approve \
-          -var="vpc_id=${{ secrets.VPC_ID }}" \
-          -var="subnet_ids=[\"${{ secrets.SUBNET_ID_1 }}\",\"${{ secrets.SUBNET_ID_2 }}\"]" \
-          -var="alb_listener_arn_https=${{ secrets.ALB_LISTENER_ARN }}" \
-          -var="alb_security_group_id=${{ secrets.ALB_SG_ID }}" \
-          -var="backend_image=${{ env.BACKEND_IMAGE_URI }}" \
-          -var="frontend_image=${{ env.FRONTEND_IMAGE_URI }}"
+      - name: Build frontend image
+        run: |
+          docker build -t ${{ env.FRONTEND_ECR_REPO }} ./frontend
+          docker tag ${{ env.FRONTEND_ECR_REPO }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPO }}:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPO }}:latest
