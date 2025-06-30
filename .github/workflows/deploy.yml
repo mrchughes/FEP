@@ -26,16 +26,16 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
-    - name: Terraform Init
-      run: cd terraform && terraform init
+    - name: Terraform Init (ECR)
+      run: cd terraform/ecr-only && terraform init
 
-    - name: Terraform Apply
-      run: cd terraform && terraform apply -auto-approve
+    - name: Terraform Apply (ECR)
+      run: cd terraform/ecr-only && terraform apply -auto-approve
 
     - name: Get Terraform outputs
       id: tf-outputs
       run: |
-        cd terraform
+        cd terraform/ecr-only
         echo "BACKEND_REPO_URL=$(terraform output -raw backend_repo_url)" >> $GITHUB_ENV
         echo "FRONTEND_REPO_URL=$(terraform output -raw frontend_repo_url)" >> $GITHUB_ENV
 
@@ -64,9 +64,12 @@ jobs:
         docker push ${{ env.FRONTEND_REPO_URL }}:latest
         echo "FRONTEND_IMAGE_URI=${{ env.FRONTEND_REPO_URL }}:latest" >> $GITHUB_ENV
 
-    - name: Terraform Apply (update ECS with images)
+    - name: Terraform Init (ECS)
+      run: cd terraform/ecs && terraform init
+
+    - name: Terraform Apply (ECS)
       run: |
-        cd terraform
+        cd terraform/ecs
         terraform apply -auto-approve \
           -var="vpc_id=${{ secrets.VPC_ID }}" \
           -var="subnet_ids=[\"${{ secrets.SUBNET_ID_1 }}\",\"${{ secrets.SUBNET_ID_2 }}\"]" \
