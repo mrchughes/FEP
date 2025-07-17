@@ -4,6 +4,32 @@
 
 The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.0 ecosystem responsible for processing benefit awards for eligible citizens. It issues benefit award verifiable credentials and consumes electric bill credentials from Northern Electric to determine benefit eligibility and amounts.
 
+## Microservice Architecture Requirements
+
+As part of the PDS 2.0 ecosystem, the FEP service follows these architectural principles:
+
+1. **Loose Coupling**: 
+   - Operates as an independent microservice with clear boundaries
+   - Communicates with other services only through well-defined APIs
+   - Does not share databases or internal data structures with other services
+   - Uses the API Registry for service discovery
+
+2. **Complete Implementation**:
+   - All endpoints must be fully implemented with no placeholders
+   - Error handling must follow the PDS error handling standards
+   - All required functionality must be present before deployment
+
+3. **API Publication**:
+   - Must publish its OpenAPI specification to the API Registry on startup
+   - Must keep its API documentation current and accurate
+   - Should version its API appropriately using semantic versioning
+
+4. **GOV.UK Design System Compliance**:
+   - All user interfaces must comply with the GOV.UK Design System
+   - Must meet WCAG 2.1 AA accessibility standards
+   - Must follow GOV.UK content design guidelines
+   - Error messages must follow GOV.UK standards
+
 ## Service Responsibilities
 
 1. **User Management**
@@ -11,10 +37,10 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
    - Authenticate users accessing the FEP service
    - Manage user roles and permissions
 
-2. **DID Authentication**
-   - Implement did:web document hosting
-   - Handle challenge-response verification
-   - Authenticate with Solid PDS using DID
+2. **Service Identity**
+   - Maintain a DID (did:web) for service identification
+   - Provide cryptographic proof of domain ownership
+   - Support verification of issued credentials
 
 3. **Credential Management**
    - Issue benefit award verifiable credentials
@@ -30,33 +56,55 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 
 ## API Endpoints
 
-### DID Authentication
+### Authentication
 
-#### Get DID Document
+#### User Login
 
-- **Endpoint:** `GET /.well-known/did.json`
-- **Description:** Retrieve the FEP service's DID document
+- **Endpoint:** `POST /auth/login`
+- **Description:** Authenticate a user with the FEP service
 - **Authentication:** None
-- **Response:** DID document in JSON format
-
-#### Generate Challenge Response
-
-- **Endpoint:** `POST /auth/response`
-- **Description:** Generate a signed response to an authentication challenge
 - **Request Body:**
   ```json
   {
-    "challenge": "string"
+    "username": "string",
+    "password": "string"
   }
   ```
 - **Response:**
   ```json
   {
-    "did": "did:web:fep.gov.uk",
-    "challenge": "string",
-    "signature": "string"
+    "token": "string",
+    "refreshToken": "string",
+    "expiresIn": "number"
   }
   ```
+
+#### Refresh Token
+
+- **Endpoint:** `POST /auth/refresh`
+- **Description:** Get a new access token using a refresh token
+- **Request Body:**
+  ```json
+  {
+    "refreshToken": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "token": "string",
+    "expiresIn": "number"
+  }
+  ```
+
+### Service Identity
+
+#### Get DID Document
+
+- **Endpoint:** `GET /.well-known/did.json`
+- **Description:** Retrieve the FEP service's DID document for verification
+- **Authentication:** None
+- **Response:** DID document in JSON format
 
 ### Credential Management
 
@@ -64,11 +112,12 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 
 - **Endpoint:** `POST /credentials/issue`
 - **Description:** Issue a benefit award credential to a user
-- **Authentication:** Required (Admin)
+- **Authentication:** Required (Admin JWT)
 - **Request Body:**
   ```json
   {
-    "userWebId": "string",
+    "userDid": "string",
+    "pdsUrl": "string",
     "benefitData": {
       "fullName": "string",
       "dateOfBirth": "string",
@@ -95,7 +144,7 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 
 - **Endpoint:** `GET /credentials/:credentialId/status`
 - **Description:** Check the status of an issued credential
-- **Authentication:** Required
+- **Authentication:** Required (JWT)
 - **Response:**
   ```json
   {
@@ -112,11 +161,11 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 
 - **Endpoint:** `POST /credentials/verify/electric-bill`
 - **Description:** Verify an electric bill credential from Northern Electric
-- **Authentication:** Required (Admin)
+- **Authentication:** Required (Admin JWT)
 - **Request Body:**
   ```json
   {
-    "userWebId": "string",
+    "userDid": "string",
     "credentialId": "string"
   }
   ```
@@ -144,11 +193,11 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 
 - **Endpoint:** `POST /benefits/apply`
 - **Description:** Submit a new benefit application
-- **Authentication:** Required
+- **Authentication:** Required (JWT)
 - **Request Body:**
   ```json
   {
-    "userWebId": "string",
+    "userDid": "string",
     "applicantData": {
       "fullName": "string",
       "dateOfBirth": "string",
@@ -186,7 +235,7 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 
 - **Endpoint:** `GET /benefits/applications/:applicationId`
 - **Description:** Check the status of a benefit application
-- **Authentication:** Required
+- **Authentication:** Required (JWT)
 - **Response:**
   ```json
   {
@@ -203,13 +252,73 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
   }
   ```
 
+### User DID Management
+
+#### Verify User DID Ownership
+
+- **Endpoint:** `POST /users/verify-did`
+- **Description:** Verify a user's ownership of a DID with their PDS
+- **Authentication:** Required (User JWT)
+- **Request Body:**
+  ```json
+  {
+    "did": "string",
+    "pdsUrl": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "requestId": "string",
+    "status": "pending",
+    "expiresAt": "string"
+  }
+  ```
+
+#### Check DID Verification Status
+
+- **Endpoint:** `GET /users/verify-did/:requestId`
+- **Description:** Check the status of a DID verification request
+- **Authentication:** Required (User JWT)
+- **Response:**
+  ```json
+  {
+    "requestId": "string",
+    "status": "pending|verified|failed",
+    "did": "string",
+    "verifiedAt": "string"
+  }
+  ```
+
+#### Bind Verified DID to User Account
+
+- **Endpoint:** `POST /users/bind-did`
+- **Description:** Permanently bind a verified DID to the user's account
+- **Authentication:** Required (User JWT)
+- **Request Body:**
+  ```json
+  {
+    "did": "string",
+    "verificationId": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "userId": "string",
+    "did": "string",
+    "boundAt": "string",
+    "status": "active"
+  }
+  ```
+
 ### Administration
 
 #### Get Benefit Statistics
 
 - **Endpoint:** `GET /admin/stats`
 - **Description:** Get statistics on benefit awards
-- **Authentication:** Required (Admin)
+- **Authentication:** Required (Admin JWT)
 - **Response:**
   ```json
   {
@@ -310,18 +419,99 @@ The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.
 }
 ```
 
+### User DID Binding
+
+```json
+{
+  "id": "string",
+  "userId": "string",
+  "did": "string",
+  "pdsUrl": "string",
+  "verificationRequestId": "string",
+  "verificationStatus": "pending|verified|failed",
+  "verifiedAt": "string",
+  "boundAt": "string",
+  "lastCheckedAt": "string",
+  "status": "active|revoked",
+  "revokedAt": "string",
+  "revokedReason": "string"
+}
+```
+
+## Development Approach
+
+### API-First Design
+
+- All endpoints must be designed and documented using OpenAPI 3.0 before implementation
+- API specifications must be stored in the `/specifications` directory
+- Changes to the API must be documented and versioned appropriately
+- API design must follow RESTful principles and standard HTTP methods
+
+### Test-Driven Development
+
+- All functionality must have corresponding unit and integration tests
+- Test coverage should meet or exceed 80% for all critical paths
+- Mock services should be used to test integration points
+- End-to-end tests should verify the complete benefit application journey
+
+### Cross-Service Integration
+
+- All interactions with other services must be implemented using the API Registry
+- Must integrate with Northern Electric for utility bill verification
+- Must integrate with DRO for debt relief eligibility verification
+- Services should gracefully handle unavailability of dependent services
+- Retry mechanisms should be implemented for transient failures
+- Circuit breakers should be used to prevent cascading failures
+
+## Integration Points
+
+### API Registry Integration
+
+- Service must register with the API Registry on startup
+- Must publish OpenAPI specification to the registry
+- Must use the API Registry to discover other services
+- Should update the registry when service status changes
+
+### Other Service Dependencies
+
+| Service | Dependency Type | Purpose |
+|---------|----------------|---------|
+| Auth Service | Authentication | User authentication for accessing the service |
+| API Registry | Service Discovery | Locating and accessing other services |
+| Solid PDS | Data Storage | Storing and retrieving user credentials |
+| DRO | Credential Verification | Verifying debt relief eligibility credentials |
+| Northern Electric | Credential Verification | Verifying electric bill credentials |
+
+## Monitoring and Observability
+
+- Must implement health check endpoint (`/health`)
+- Must expose metrics endpoint (`/metrics`) for Prometheus
+- Must implement structured logging
+- Should include trace IDs in logs for distributed tracing
+- Should implement performance monitoring for benefit processing
+- Should track metrics on benefit application processing times and approval rates
+
+## Deployment and Scalability
+
+- Service must be containerized using Docker
+- Must support horizontal scaling
+- Must be stateless or manage state externally
+- Configuration should be environment-based
+- Should support zero-downtime deployments
+- Should implement queuing for benefit processing to handle high volumes
+
 ## Dependencies
 
 1. **External Services**
    - MongoDB: Data storage
    - Redis: Caching and session management
-   - Solid PDS: For credential storage and user authorization
    - API Registry: Service registration
 
 2. **Libraries**
    - pds-common: Shared utilities and DID helpers
    - jsonld-signatures: Verifiable credential signatures
    - did-resolver: DID resolution
+   - jsonwebtoken: JWT authentication
 
 ## Configuration
 
@@ -336,14 +526,14 @@ NODE_ENV=development
 MONGODB_URI=mongodb://mongodb:27017/fep-service
 REDIS_URL=redis://redis:6379
 
-# DID settings
+# JWT Authentication
+JWT_SECRET=your-jwt-secret
+JWT_EXPIRES_IN=1h
+REFRESH_TOKEN_EXPIRES_IN=7d
+
+# DID settings (for Verifiable Credentials)
 DID_WEB_DOMAIN=fep.gov.uk
 PRIVATE_KEY_PATH=/app/keys/private.key
-
-# PDS settings
-SOLID_PDS_URL=http://solid-pds:3000
-OIDC_CLIENT_ID=fep-service
-OIDC_CLIENT_SECRET=your-client-secret
 
 # API Registry settings
 API_REGISTRY_URL=http://api-registry:3005
@@ -394,10 +584,10 @@ All errors follow the standardized error format defined in PDS specifications:
 
 Common error codes:
 - `auth/unauthorized`: Unauthorized access
+- `auth/invalid-token`: Invalid JWT token
 - `application/invalid`: Invalid application data
 - `credential/verification-failed`: Credential verification failed
 - `credential/issuance-failed`: Credential issuance failed
-- `pds/connection-error`: Error connecting to PDS
 
 ## Security Considerations
 
