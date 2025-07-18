@@ -45,7 +45,7 @@ As part of the PDS 2.0 ecosystem, the FEP service follows these architectural pr
 3. **Credential Management**
    - Issue benefit award verifiable credentials
    - Verify electric bill credentials from Northern Electric
-   - Verify debt relief eligibility credentials from DRO
+   - Verify birth and marriage certificate credentials from DRO
    - Maintain audit logs of all credential operations
 
 4. **Benefit Processing**
@@ -94,6 +94,66 @@ As part of the PDS 2.0 ecosystem, the FEP service follows these architectural pr
   {
     "token": "string",
     "expiresIn": "number"
+  }
+  ```
+
+#### User Registration
+
+- **Endpoint:** `POST /auth/register`
+- **Description:** Register a new user account with the FEP service
+- **Authentication:** None
+- **Request Body:**
+  ```json
+  {
+    "username": "string",
+    "email": "string",
+    "password": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "id": "string",
+    "username": "string",
+    "email": "string"
+  }
+  ```
+
+#### Password Reset Request
+
+- **Endpoint:** `POST /auth/forgot-password`
+- **Description:** Initiate password reset process
+- **Authentication:** None
+- **Request Body:**
+  ```json
+  {
+    "email": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "message": "Password reset email sent"
+  }
+  ```
+
+#### Password Reset Completion
+
+- **Endpoint:** `POST /auth/reset-password`
+- **Description:** Complete password reset with token
+- **Authentication:** None
+- **Request Body:**
+  ```json
+  {
+    "token": "string",
+    "newPassword": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "message": "Password reset successfully"
   }
   ```
 
@@ -458,7 +518,7 @@ As part of the PDS 2.0 ecosystem, the FEP service follows these architectural pr
 
 - All interactions with other services must be implemented using the API Registry
 - Must integrate with Northern Electric for utility bill verification
-- Must integrate with DRO for debt relief eligibility verification
+- Must integrate with DRO for birth and marriage certificate verification
 - Services should gracefully handle unavailability of dependent services
 - Retry mechanisms should be implemented for transient failures
 - Circuit breakers should be used to prevent cascading failures
@@ -476,10 +536,10 @@ As part of the PDS 2.0 ecosystem, the FEP service follows these architectural pr
 
 | Service | Dependency Type | Purpose |
 |---------|----------------|---------|
-| Auth Service | Authentication | User authentication for accessing the service |
+| Identity Provider Service | Authentication | User authentication for accessing the service |
 | API Registry | Service Discovery | Locating and accessing other services |
 | Solid PDS | Data Storage | Storing and retrieving user credentials |
-| DRO | Credential Verification | Verifying debt relief eligibility credentials |
+| DRO | Credential Verification | Verifying birth and marriage certificate credentials |
 | Northern Electric | Credential Verification | Verifying electric bill credentials |
 
 ## Monitoring and Observability
