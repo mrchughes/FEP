@@ -26,6 +26,8 @@ tags:
     description: Payment processing operations
   - name: admin
     description: Administration operations
+  - name: pds
+    description: PDS integration and registration operations
 
 paths:
   /.well-known/did.json:
@@ -580,6 +582,145 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+
+  /.well-known/did/challenge:
+    get:
+      tags:
+        - pds
+      summary: Get PDS challenge
+      description: Request a challenge for PDS domain verification (PDS 2.1 Requirement #3)
+      operationId: getPdsChallenge
+      responses:
+        '200':
+          description: Challenge issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenge:
+                    type: string
+                  expires_in:
+                    type: integer
+    post:
+      tags:
+        - pds
+      summary: Submit PDS challenge response
+      description: Submit signed challenge for PDS domain verification
+      operationId: submitPdsChallenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - challenge
+                - signature
+                - did
+              properties:
+                challenge:
+                  type: string
+                signature:
+                  type: string
+                did:
+                  type: string
+      responses:
+        '200':
+          description: Challenge verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                  message:
+                    type: string
+
+  /pds/register:
+    post:
+      tags:
+        - pds
+      summary: Register with PDS
+      description: Register FEP service with Personal Data Store (PDS 2.1 Requirement #3)
+      operationId: registerWithPds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - service_name
+                - did
+                - capabilities
+              properties:
+                service_name:
+                  type: string
+                did:
+                  type: string
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                domain_proof:
+                  type: string
+      responses:
+        '201':
+          description: Service registered with PDS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  client_id:
+                    type: string
+                  registration_id:
+                    type: string
+                  message:
+                    type: string
+
+  /pds/token:
+    post:
+      tags:
+        - pds
+      summary: Request PDS access token
+      description: Request OAuth access token for PDS API access (PDS 2.1 Requirement #5)
+      operationId: requestPdsToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_id
+                - grant_type
+              properties:
+                client_id:
+                  type: string
+                grant_type:
+                  type: string
+                  enum: [client_credentials]
+                scope:
+                  type: string
+      responses:
+        '200':
+          description: Access token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  scope:
+                    type: string
 
 components:
   schemas:
