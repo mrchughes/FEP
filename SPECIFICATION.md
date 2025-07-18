@@ -166,6 +166,74 @@ As part of the PDS 2.0 ecosystem, the FEP service follows these architectural pr
 - **Authentication:** None
 - **Response:** DID document in JSON format
 
+#### Handle PDS Challenge
+
+- **Endpoint:** `POST /.well-known/did/challenge`
+- **Description:** Handle challenge-response verification from PDS for domain ownership
+- **Authentication:** None
+- **Request Body:**
+  ```json
+  {
+    "challenge": "string",
+    "nonce": "string"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "signature": "string",
+    "timestamp": "string"
+  }
+  ```
+
+### PDS Integration
+
+#### Register Service with PDS
+
+- **Endpoint:** `POST /pds/register`
+- **Description:** Register this FEP service with a PDS as both publisher and consumer
+- **Authentication:** Required (Admin JWT)
+- **Request Body:**
+  ```json
+  {
+    "pdsUrl": "string",
+    "serviceDid": "string",
+    "domain": "string",
+    "capabilities": ["publish", "consume"]
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "registrationId": "string",
+    "status": "pending",
+    "verificationRequired": true
+  }
+  ```
+
+#### Request PDS Access Token
+
+- **Endpoint:** `POST /pds/token`
+- **Description:** Request OAuth access and refresh tokens from PDS using service DID
+- **Authentication:** Required (Admin JWT)
+- **Request Body:**
+  ```json
+  {
+    "pdsUrl": "string",
+    "serviceDid": "string",
+    "scopes": ["read", "write"]
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "accessToken": "string",
+    "refreshToken": "string",
+    "expiresIn": "number",
+    "scope": "string"
+  }
+  ```
+
 ### Credential Management
 
 #### Issue Benefit Award Credential
