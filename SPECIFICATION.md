@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Fuel Economy Payment (FEP) Service is a government program within the PDS 2.0 ecosystem responsible for processing benefit awards for eligible citizens. It issues benefit award verifiable credentials and consumes electric bill credentials from Northern Electric to determine benefit eligibility and amounts.
+The Funeral Expense Payment (FEP) Service is a government program within the PDS 2.0 ecosystem responsible for processing benefit awards for eligible citizens. It issues benefit award verifiable credentials and consumes electric bill credentials from Northern Electric to determine benefit eligibility and amounts.
 
 ## Microservice Architecture Requirements
 

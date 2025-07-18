@@ -1,7 +1,7 @@
 {
     "name": "fep",
     "version": "1.0.0",
-    "description": "Financial Eligibility Passport Service for PDS 2.0",
+    "description": "Funeral Expense Payment Service for PDS 2.0",
     "main": "src/index.js",
     "scripts": {
         "start": "node src/index.js",
