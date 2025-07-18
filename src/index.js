@@ -33,47 +33,47 @@ app.use('/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'fep-service',
-    version: process.env.SERVICE_VERSION || '1.0.0'
-  });
+    res.status(200).json({
+        status: 'ok',
+        service: 'fep-service',
+        version: process.env.SERVICE_VERSION || '1.0.0'
+    });
 });
 
 // Serve DID document
 app.get('/.well-known/did.json', (req, res) => {
-  // In production, this would be loaded from a secure storage
-  res.json({
-    "@context": ["https://www.w3.org/ns/did/v1"],
-    "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
-    "verificationMethod": [{
-      "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`,
-      "type": "Ed25519VerificationKey2020",
-      "controller": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
-      "publicKeyJwk": {
-        // This would be the actual public key in production
-        "kty": "OKP",
-        "crv": "Ed25519",
-        "x": "example-public-key-data"
-      }
-    }],
-    "authentication": [
-      `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
-    ],
-    "assertionMethod": [
-      `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
-    ]
-  });
+    // In production, this would be loaded from a secure storage
+    res.json({
+        "@context": ["https://www.w3.org/ns/did/v1"],
+        "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
+        "verificationMethod": [{
+            "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`,
+            "type": "Ed25519VerificationKey2020",
+            "controller": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
+            "publicKeyJwk": {
+                // This would be the actual public key in production
+                "kty": "OKP",
+                "crv": "Ed25519",
+                "x": "example-public-key-data"
+            }
+        }],
+        "authentication": [
+            `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
+        ],
+        "assertionMethod": [
+            `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
+        ]
+    });
 });
 
 // Start server
 app.listen(port, () => {
-  console.log(`FEP Service listening on port ${port}`);
-  
-  // Publish API specification to API Registry
-  publishApiSpec().catch(err => {
-    console.error('Error publishing API specification:', err.message);
-  });
+    console.log(`FEP Service listening on port ${port}`);
+
+    // Publish API specification to API Registry
+    publishApiSpec().catch(err => {
+        console.error('Error publishing API specification:', err.message);
+    });
 });
 const didRoutes = require('./routes/did');
 const authRoutes = require('./routes/auth');
@@ -90,45 +90,45 @@ app.use('/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'fep-service',
-    version: process.env.SERVICE_VERSION || '1.0.0'
-  });
+    res.status(200).json({
+        status: 'ok',
+        service: 'fep-service',
+        version: process.env.SERVICE_VERSION || '1.0.0'
+    });
 });
 
 // Serve DID document
 app.get('/.well-known/did.json', (req, res) => {
-  // In production, this would be loaded from a secure storage
-  res.json({
-    "@context": ["https://www.w3.org/ns/did/v1"],
-    "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
-    "verificationMethod": [{
-      "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`,
-      "type": "Ed25519VerificationKey2020",
-      "controller": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
-      "publicKeyJwk": {
-        // This would be the actual public key in production
-        "kty": "OKP",
-        "crv": "Ed25519",
-        "x": "example-public-key-data"
-      }
-    }],
-    "authentication": [
-      `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
-    ],
-    "assertionMethod": [
-      `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
-    ]
-  });
+    // In production, this would be loaded from a secure storage
+    res.json({
+        "@context": ["https://www.w3.org/ns/did/v1"],
+        "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
+        "verificationMethod": [{
+            "id": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`,
+            "type": "Ed25519VerificationKey2020",
+            "controller": `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}`,
+            "publicKeyJwk": {
+                // This would be the actual public key in production
+                "kty": "OKP",
+                "crv": "Ed25519",
+                "x": "example-public-key-data"
+            }
+        }],
+        "authentication": [
+            `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
+        ],
+        "assertionMethod": [
+            `did:web:${process.env.DID_WEB_DOMAIN || req.hostname}#key-1`
+        ]
+    });
 });
 
 // Start server
 app.listen(port, () => {
-  console.log(`FEP Service listening on port ${port}`);
-  
-  // Publish API specification to API Registry
-  publishApiSpec().catch(err => {
-    console.error('Error publishing API specification:', err.message);
-  });
+    console.log(`FEP Service listening on port ${port}`);
+
+    // Publish API specification to API Registry
+    publishApiSpec().catch(err => {
+        console.error('Error publishing API specification:', err.message);
+    });
 });
